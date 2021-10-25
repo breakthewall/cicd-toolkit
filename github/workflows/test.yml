@@ -28,8 +28,16 @@ jobs:
     - name: Installing make
       run: conda install -y make
 
+    - name: Checkout CI/CD Toolkit
+      uses: actions/checkout@v2
+      with:
+        repository: breakthewall/cicd-toolkit
+        path: cicd-toolkit
+        persist-credentials: false
+        fetch-depth: 0
+
     - name: Testing package
       run: |
-        cd ci
+        cd cicd-toolkit
         make test-buildenv env=test
         conda run -n test make test

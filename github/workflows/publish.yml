@@ -67,7 +67,7 @@ jobs:
           CHANGELOG_GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           gem install github_changelog_generator
-          github_changelog_generator -u neilswainston -p sbmltosbol --no-unreleased
+          github_changelog_generator -u <user> -p <repo> --no-unreleased
       - name: Update _version.py
         env:
           CHANGELOG_GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -102,12 +102,12 @@ jobs:
       - name: Checkout feedstock fork
         uses: actions/checkout@v2
         with:
-          repository: conda-forge/sbml2sbol-feedstock
+          repository: conda-forge/<repo>-feedstock
           persist-credentials: false
           fetch-depth: 0
       - name: Update recipe
         run: |
-          wget -O- https://github.com/neilswainston/sbmltosbol/archive/refs/tags/$VERSION.tar.gz | shasum -a 256 > sha.txt
+          wget -O- https://github.com/<user>/<repo>/archive/refs/tags/$VERSION.tar.gz | shasum -a 256 > sha.txt
           sha=`python -c "f = open('sha.txt'); print(f.read().split()[0]); f.close()"`
           rm -f sha.txt
           sed -i -E "s/(\{% set version = \")[^>]+(\" %\})/\1$VERSION\2/" recipe/meta.yaml
