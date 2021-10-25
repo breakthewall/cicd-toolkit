@@ -121,6 +121,6 @@ jobs:
           VERSION: ${{ needs.tag.outputs.new_tag }}
       - name: Create Pull Request
         uses: peter-evans/create-pull-request@v3
-        # with:
-          # token: ${{ secrets.FEEDSTOCK }}
-          # push-to-fork: brsynth/sbml2sbol-feedstock
+        with:
+          token: ${{ secrets.FEEDSTOCK }}
+          push-to-fork: brsynth/sbml2sbol-feedstock
