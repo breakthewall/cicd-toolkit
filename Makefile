@@ -29,11 +29,11 @@ clean:
 	@$(MAKE_CMD) -f conda.mk clean
 
 # FAST TESTING
-check: ## Test code with 'pytest', this is the fastest way to test the code
-	@$(MAKE_CMD) -f test.mk check
+check: check-buildenv
+	@conda run -n $(env) --no-capture-output $(MAKE_CMD) -f test.mk check
 
-test: ## Test code with 'pytest', this is the fastest way to test the code
-	@$(MAKE_CMD) -f test.mk test args="$(args)"
+test: test-buildenv ## Test code with 'pytest', this is the fastest way to test the code
+	@conda run -n $(env) --no-capture-output $(MAKE_CMD) -f test.mk test
 
 %-buildenv: ## Test conda package
 ifneq ($(strip $(env)),)

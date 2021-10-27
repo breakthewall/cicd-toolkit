@@ -54,7 +54,7 @@ help-advanced: ## Advanced help.
 ARGS = $(filter-out $@,$(MAKECMDGOALS))
 CONDA_BUILD_ARGS = --quiet --numpy 1.11
 MAKE_CMD = $(MAKE) -s --no-print-directory
-ECHO = echo ">>>"
+ECHO = echo -n ">>>"
 
 clean: conda-clean-build
 
@@ -211,6 +211,7 @@ check-environment-%: check-conda build-environment-%
 build-environment-%: check-conda
 ifneq ("$(wildcard $(MY_ENV_DIR))","") # check if the directory is there
 	@$(ECHO) "'$(env)' environment already exists."
+	@echo
 else
 	@$(ECHO) "Creating '$(env)' environment... "
 	@conda env create -n $(env) -f $($(*)_env_file) > /dev/null
