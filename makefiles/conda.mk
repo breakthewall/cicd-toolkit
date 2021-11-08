@@ -215,7 +215,7 @@ ifneq ("$(wildcard $(MY_ENV_DIR))","") # check if the directory is there
 else
 	@$(ECHO) "Creating '$(env)' environment... "
 	@conda env create -n $(env) -f $($(*)_env_file) > /dev/null
-	@conda run --name $(env) conda install `make -f test.mk test-deps | awk {'print $$2'} | tr '\n' ' '` > /dev/null
+	@conda run --name $(env) conda install -y python `make -f test.mk test-deps | awk {'print $$2'} | tr '\n' ' '` > /dev/null
 	@echo OK
 endif
 
