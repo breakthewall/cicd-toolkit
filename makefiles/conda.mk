@@ -2,6 +2,7 @@ include ../.ci_env
 
 SHELL := /bin/bash
 PACKAGE = $(shell python ../../setup.py --name)
+VERSION = $(shell python ../../setup.py --version)
 PLATFORM = $(shell conda info | grep platform | awk '{print $$3}')
 recipe := ../recipe
 meta := meta.yaml
@@ -122,7 +123,7 @@ conda-build-only: check-environment-build build-recipe
 
 conda-test-only: check-environment-build build-recipe conda-add-channels
 	@$(ECHO) "Testing conda package... "
-	conda run --name ${PACKAGE}_build conda build --test $(CONDA_BUILD_ARGS) ${CONDA_BLD_PATH}/${PLATFORM}/${PACKAGE}*.tar.bz2 \
+	conda run --name ${PACKAGE}_build conda build --test $(CONDA_BUILD_ARGS) ${CONDA_BLD_PATH}/${PLATFORM}/${PACKAGE}-${VERSION}*.tar.bz2 \
 	&& echo OK
 
 ### build+test
