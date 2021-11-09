@@ -133,7 +133,7 @@ conda-build: check-environment-build conda-add-channels
 	@conda run --name ${PACKAGE}_build conda build $(CONDA_BUILD_ARGS) $(VARIANTS) --output-folder ${CONDA_BLD_PATH} $(recipe) > /dev/null \
 	&& echo OK
 
-conda-convert: check-conda
+conda-convert:
 	@$(ECHO) "Converting conda package from ${PLATFORM} to osx-64, linux-64 and win-64... "
 	@conda run --name ${PACKAGE}_build \
 		conda convert \
@@ -206,10 +206,10 @@ check_env_file := ../test/check-environment.yml
 test_env_file  := ../../environment.yaml
 
 
-check-environment-%: check-conda build-environment-%
+check-environment-%: build-environment-%
 	@
 
-build-environment-%: check-conda
+build-environment-%:
 ifneq ("$(wildcard $(MY_ENV_DIR))","") # check if the directory is there
 	@$(ECHO) "'$(env)' environment already exists."
 	@echo
