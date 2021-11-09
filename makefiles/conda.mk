@@ -1,6 +1,6 @@
 include ../.ci_env
 
-#SHELL := /bin/bash
+SHELL := /bin/bash
 PACKAGE = $(shell python ../../setup.py --name)
 VERSION = $(shell python ../../setup.py --version)
 PLATFORM = $(shell conda info | grep platform | awk '{print $$3}')
@@ -133,7 +133,7 @@ conda-build: check-environment-build conda-add-channels
 	@conda run --name ${PACKAGE}_build conda build $(CONDA_BUILD_ARGS) $(VARIANTS) --output-folder ${CONDA_BLD_PATH} $(recipe) > /dev/null \
 	&& echo OK
 
-conda-convert:
+conda-convert: check-conda
 	@$(ECHO) "Converting conda package from ${PLATFORM} to osx-64, linux-64 and win-64... "
 	@conda run --name ${PACKAGE}_build \
 		conda convert \
@@ -163,42 +163,42 @@ conda-publish:
 			${CONDA_BLD_PATH}/*/${PACKAGE}-*.tar.bz2
 
 
-# # ENVIRONMENT CHECKING
-# ## Check conda
-# ifeq (,$(shell which conda))
-#     HAS_CONDA=False
-# else
-#     HAS_CONDA=True
-#     ENV_DIR=$(shell conda info --base)
-#     MY_ENV_DIR=$(ENV_DIR)/envs/$(env)
-#     CONDA_ACTIVATE=source $$(conda info --base)/etc/profile.d/conda.sh ; conda activate ; conda activate
-# endif
-# check-conda:
-# ifeq (False,$(HAS_CONDA))
-# 	$(error >>> Install conda first.)
-# endif
+# ENVIRONMENT CHECKING
+## Check conda
+ifeq (,$(shell which conda))
+    HAS_CONDA=False
+else
+    HAS_CONDA=True
+    ENV_DIR=$(shell conda info --base)
+    MY_ENV_DIR=$(ENV_DIR)/envs/$(env)
+    CONDA_ACTIVATE=source $$(conda info --base)/etc/profile.d/conda.sh ; conda activate ; conda activate
+endif
+check-conda:
+ifeq (False,$(HAS_CONDA))
+	$(error >>> Install conda first.)
+endif
 
-# ## Check conda-build
-# ifeq (,$(shell which conda-build))
-#     HAS_CONDA_BUILD=False
-# else
-#     HAS_CONDA_BUILD=True
-# endif
-# check-conda-build:
-# ifeq (False,$(HAS_CONDA_BUILD))
-# 	echo conda env -n $(PACKAGE)_build create -f $(recipe)/conda_build_env.yaml
-# endif
+## Check conda-build
+ifeq (,$(shell which conda-build))
+    HAS_CONDA_BUILD=False
+else
+    HAS_CONDA_BUILD=True
+endif
+check-conda-build:
+ifeq (False,$(HAS_CONDA_BUILD))
+	echo conda env -n $(PACKAGE)_build create -f $(recipe)/conda_build_env.yaml
+endif
 
-# ## Check anaconda-client
-# ifeq (,$(shell which anaconda))
-#     HAS_ANACONDA_CLIENT=False
-# else
-#     HAS_ANACONDA_CLIENT=True
-# endif
-# check-anaconda-client:
-# ifeq (False,$(HAS_ANACONDA_CLIENT))
-# 	@$(MAKE_CMD) -f conda.mk conda-install-anaconda-client channel=conda-forge
-# endif
+## Check anaconda-client
+ifeq (,$(shell which anaconda))
+    HAS_ANACONDA_CLIENT=False
+else
+    HAS_ANACONDA_CLIENT=True
+endif
+check-anaconda-client:
+ifeq (False,$(HAS_ANACONDA_CLIENT))
+	@$(MAKE_CMD) -f conda.mk conda-install-anaconda-client channel=conda-forge
+endif
 
 
 build_env_file := $(recipe)/conda_build_env.yaml
@@ -206,10 +206,10 @@ check_env_file := ../test/check-environment.yml
 test_env_file  := ../../environment.yaml
 
 
-check-environment-%: build-environment-%
+check-environment-%: check-conda build-environment-%
 	@
 
-build-environment-%:
+build-environment-%: check-conda
 ifneq ("$(wildcard $(MY_ENV_DIR))","") # check if the directory is there
 	@$(ECHO) "'$(env)' environment already exists."
 	@echo

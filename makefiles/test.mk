@@ -1,6 +1,6 @@
 include ../.ci_env
 
-#SHELL := /bin/bash
+SHELL := /bin/bash
 
 # HELP
 # This will output the help for each task

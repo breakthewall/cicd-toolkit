@@ -1,4 +1,4 @@
-#SHELL := /bin/bash
+SHELL := /bin/bash
 SELF_DIR := $(dir $(lastword $(MAKEFILE_LIST)))
 PACKAGE = $(shell python ../setup.py --name)
 
