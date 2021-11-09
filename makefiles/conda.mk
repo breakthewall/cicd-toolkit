@@ -1,6 +1,6 @@
 include ../.ci_env
 
-SHELL := /bin/bash
+#SHELL := /bin/bash
 PACKAGE = $(shell python ../../setup.py --name)
 VERSION = $(shell python ../../setup.py --version)
 PLATFORM = $(shell conda info | grep platform | awk '{print $$3}')
