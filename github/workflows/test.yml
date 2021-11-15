@@ -34,7 +34,8 @@ jobs:
           miniconda-version: "latest"
           environment-file: environment.yaml
           activate-environment: test
-      - name: Building & Testing conda package
+
+      - name: Running tests
         run: |
           conda install -y python pytest pytest-mock
           python -m pytest
