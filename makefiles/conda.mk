@@ -18,7 +18,7 @@ build-recipe:
 		>> $(recipe)/$(meta); \
 	done
 	cat $(recipe)/_meta2.yaml >> $(recipe)/$(meta)
-	$(MAKE_CMD) -f test.mk test-deps >> $(recipe)/$(meta)
+	sed -ne '/^dependencies:$$/{:a' -e 'n;p;ba' -e '}' ../conda_envs/test.yaml | awk '{print "    - "$$2}' >> $(recipe)/$(meta)
 	cat $(recipe)/_meta3.yaml >> $(recipe)/$(meta)
 	echo "    - `$(MAKE_CMD) -f test.mk test-cmd`" >> $(recipe)/$(meta)
 	cat $(recipe)/_meta4.yaml >> $(recipe)/$(meta)
@@ -37,6 +37,11 @@ build-recipe:
 		| awk '!/^$$/' \
 	> $(recipe)/conda_channels.txt
 	rm $(recipe)/_conda_channels.txt
+	$(eval CHANNELS := $(shell cat $(recipe)/conda_channels.txt))
+	echo -n '--override-channels ' > $(recipe)/_conda_channels_cmd.txt
+	for channel in $(CHANNELS); do \
+		echo -n '--channel '$$channel' ' >> $(recipe)/_conda_channels_cmd.txt; \
+	done
 
 # HELP
 # This will output the help for each task
@@ -57,11 +62,11 @@ CONDA_BUILD_ARGS = --quiet --numpy 1.11
 MAKE_CMD = $(MAKE) -s --no-print-directory
 ECHO = echo -n ">>>"
 
-clean: conda-clean-build
+conda-clean: conda-clean-build
 
 #python_versions = $(shell cat ../recipe/conda_build_config.yaml | awk 'NR>1 {print $$2}')
-recipe_channels = $(shell cat $(recipe)/conda_channels.txt)
-conda_channels  = $(shell conda config --show channels | awk '{print $2}')
+# recipe_channels = $(shell cat $(recipe)/conda_channels.txt)
+# conda_channels  = $(shell conda config --show channels | awk '{print $2}')
 
 
 define check
@@ -90,19 +95,23 @@ endif
 ### check recipe
 conda-recipe-check:
 	@$(ECHO) "Checking the recipe... "
-	@conda build --check $(CONDA_BUILD_ARGS) $(recipe) > /dev/null \
+	@conda run --name $(env) \
+		conda build --check $(CONDA_BUILD_ARGS) $(recipe) \
+	> /dev/null \
 	&& echo OK
 ### clean build products
 conda-clean-build:
-	@rm -rf ${CONDA_BLD_PATH}/*
-### Add channels specified in recipe
-conda-add-channel-%:
-	@conda run -n $(env) conda config --env --quiet --add channels $* > /dev/null
-## Check channels
-conda-add-channels:
-	@for channel in $(recipe_channels) ; do \
-		$(MAKE_CMD) -f conda.mk conda-add-channel-$$channel ; \
-	done
+	@rm -f ${CONDA_BLD_PATH}/${PLATFORM}/${PACKAGE}-${VERSION}*.tar.bz2
+conda-clean-all:
+	@rm -rf ${CONDA_BLD_PATH}
+# ### Add channels specified in recipe
+# conda-add-channel-%:
+# 	@conda run -n $(env) conda config --env --quiet --add channels $* > /dev/null
+# ## Check channels
+# conda-add-channels:
+# 	@for channel in $(recipe_channels) ; do \
+# 		$(MAKE_CMD) -f conda.mk conda-add-channel-$$channel ; \
+# 	done
 
 # Variants
 ifneq ($(strip $(variants)),)
@@ -113,35 +122,40 @@ endif
 ### build only
 conda-build-only: check-environment-build build-recipe
 	@$(ECHO) "Building conda package... "
-	conda run --name ${PACKAGE}_build \
+	@conda run --name $(env) \
 		conda build \
+			`cat $(recipe)/_conda_channels_cmd.txt` \
 			--no-test $(CONDA_BUILD_ARGS) $(VARIANTS) \
 			--output-folder ${CONDA_BLD_PATH} \
 			$(recipe) \
 	> /dev/null \
 	&& echo OK
 
-conda-test-only: check-environment-build build-recipe conda-add-channels
+conda-test-only: check-environment-build build-recipe
 	@$(ECHO) "Testing conda package... "
-	conda run --name ${PACKAGE}_build conda build --test $(CONDA_BUILD_ARGS) ${CONDA_BLD_PATH}/${PLATFORM}/${PACKAGE}-${VERSION}*.tar.bz2 \
+	@conda run --name $(env) \
+		conda build \
+			`cat $(recipe)/_conda_channels_cmd.txt` \
+			--test $(CONDA_BUILD_ARGS) \
+			${CONDA_BLD_PATH}/${PLATFORM}/${PACKAGE}-${VERSION}*.tar.bz2 \
 	&& echo OK
 
 ### build+test
-conda-build: conda-build-test
-conda-build: check-environment-build conda-add-channels
+# conda-build: conda-build-test
+conda-build: check-environment-build build-recipe
 	@$(ECHO) "Building and Testing conda package... "
-	@conda run --name ${PACKAGE}_build conda build $(CONDA_BUILD_ARGS) $(VARIANTS) --output-folder ${CONDA_BLD_PATH} $(recipe) > /dev/null \
+	@conda run --name $(env) conda build $(CONDA_BUILD_ARGS) $(VARIANTS) --output-folder ${CONDA_BLD_PATH} $(recipe) > /dev/null \
 	&& echo OK
 
 conda-convert: check-conda
 	@$(ECHO) "Converting conda package from ${PLATFORM} to osx-64, linux-64 and win-64... "
-	@conda run --name ${PACKAGE}_build \
+	@conda run --name $(env) \
 		conda convert \
 		        --platform osx-64 \
 		        --platform linux-64 \
 		        --platform win-64 \
 		        --output-dir ${CONDA_BLD_PATH} \
-		        ${CONDA_BLD_PATH}/${PLATFORM}/${PACKAGE}-*.tar.bz2 > /dev/null \
+		        ${CONDA_BLD_PATH}/${PLATFORM}/${PACKAGE}-${VERSION}*.tar.bz2 > /dev/null \
 	&& echo OK
 
 
@@ -153,14 +167,14 @@ ifneq ("","$(wildcard $(SECRETS))")
 endif
 conda-publish:
 	@$(ECHO) "Publishing conda package... "
-	conda run --name ${PACKAGE}_build \
+	conda run --name $(env) \
 		anaconda \
 			--token ${ANACONDA_TOKEN} \
 			upload \
 			--user ${ANACONDA_USER} \
 			--label ${ANACONDA_LABEL} \
 			--skip-existing \
-			${CONDA_BLD_PATH}/*/${PACKAGE}-*.tar.bz2
+			${CONDA_BLD_PATH}/${PLATFORM}/${PACKAGE}-${VERSION}*.tar.bz2
 
 
 # ENVIRONMENT CHECKING
@@ -201,13 +215,25 @@ ifeq (False,$(HAS_ANACONDA_CLIENT))
 endif
 
 
-build_env_file := $(recipe)/conda_build_env.yaml
-check_env_file := ../test/check-environment.yml
-test_env_file  := ../../environment.yaml
+build_env_file := ../conda_envs/build.yaml
+check_env_file := ../conda_envs/check.yaml
+test_env_file := ../conda_envs/test.yaml
+main_env_file  := ../../environment.yaml
 
 
 check-environment-%: check-conda build-environment-%
 	@
+
+build-environment-test: check-conda
+ifneq ("$(wildcard $(MY_ENV_DIR))","") # check if the directory is there
+	@$(ECHO) "'$(env)' environment already exists."
+	@echo
+else
+	@$(ECHO) "Creating '$(env)' environment... "
+	@conda env create -n $(env) -f $(main_env_file) > /dev/null
+	@conda run -n $(env) conda env update -f $(test_env_file) > /dev/null
+	@echo OK
+endif
 
 build-environment-%: check-conda
 ifneq ("$(wildcard $(MY_ENV_DIR))","") # check if the directory is there
@@ -216,9 +242,18 @@ ifneq ("$(wildcard $(MY_ENV_DIR))","") # check if the directory is there
 else
 	@$(ECHO) "Creating '$(env)' environment... "
 	@conda env create -n $(env) -f $($(*)_env_file) > /dev/null
-	@conda run --name $(env) conda install -y python `make -f test.mk test-deps | awk {'print $$2'} | tr '\n' ' '` > /dev/null
 	@echo OK
 endif
+
+# build-environment-check: check-conda
+# ifneq ("$(wildcard $(MY_ENV_DIR))","") # check if the directory is there
+# 	@$(ECHO) "'$(env)' environment already exists."
+# 	@echo
+# else
+# 	@$(ECHO) "Creating '$(env)' environment... "
+# 	@conda env create -n $(env) -f $(check_env_file) > /dev/null
+# 	@echo OK
+# endif
 
 conda-run-env:
 ifneq ($(strip $(cmd)),)

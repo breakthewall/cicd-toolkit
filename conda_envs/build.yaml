@@ -1,7 +1,4 @@
-name: build_env
 channels:
   - conda-forge
-  - defaults
 dependencies:
-  - python
   - conda-build

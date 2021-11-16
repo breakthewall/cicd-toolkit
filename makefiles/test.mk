@@ -23,17 +23,17 @@ else
 	test_src = $(args)
 endif
 test_cmd := python -m pytest -v --cov --cov-report term-missing
-define test_deps
-    - pytest
-    - pytest-cov
-    - pytest-mock
-endef
-export test_deps
+# define test_deps
+#     - pytest
+#     - pytest-cov
+#     - pytest-mock
+# endef
+# export test_deps
 
 test-cmd:
 	@echo $(test_cmd)
-test-deps:
-	@echo "$$test_deps"
+# test-deps:
+# 	@echo "$$test_deps"
 
 all: check test ## Run check and test code
 

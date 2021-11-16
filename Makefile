@@ -55,10 +55,13 @@ conda-all: conda-build conda-test conda-convert conda-publish ## (default) Perfo
 
 # CONDA WORKFLOW
 conda-build: ## Build (without tests) conda package, 'variants=<variants>' option can be passed (format must be fully compliant with '--variants' option of conda-build)
-	@$(MAKE_CMD) -f conda.mk conda-build-only env=$(env) variants="$(variants)"
+	@$(MAKE_CMD) -f conda.mk conda-build-only env=build variants="$(variants)"
 
 conda-test: ## Test conda package
-	@$(MAKE_CMD) -f conda.mk conda-test-only env=$(env)
+	@$(MAKE_CMD) -f conda.mk conda-test-only env=build
+
+conda-clean: ## Test conda package
+	@$(MAKE_CMD) -f conda.mk conda-clean
 
 conda-convert: ## Convert conda package towards all platforms, if 'python=<version>' (default is all variants of package built) is set then the package built for this version of Python will be converted
 	@$(MAKE_CMD) -f conda.mk conda-convert env=$(env)
