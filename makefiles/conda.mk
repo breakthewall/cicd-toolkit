@@ -144,7 +144,13 @@ conda-test-only: check-environment-build build-recipe
 # conda-build: conda-build-test
 conda-build: check-environment-build build-recipe
 	@$(ECHO) "Building and Testing conda package... "
-	@conda run --name $(env) conda build $(CONDA_BUILD_ARGS) $(VARIANTS) --output-folder ${CONDA_BLD_PATH} $(recipe) > /dev/null \
+	@conda run --name $(env) \
+		conda build \
+		`cat $(recipe)/_conda_channels_cmd.txt` \
+		$(CONDA_BUILD_ARGS) $(VARIANTS) \
+		--output-folder ${CONDA_BLD_PATH} \
+		$(recipe) \
+	> /dev/null \
 	&& echo OK
 
 conda-convert: check-conda

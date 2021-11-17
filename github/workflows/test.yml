@@ -35,7 +35,16 @@ jobs:
           environment-file: environment.yaml
           activate-environment: test
 
+      - name: Checkout CI/CD Toolkit
+        uses: actions/checkout@v2
+        with:
+          repository: breakthewall/cicd-toolkit
+          path: cicd-toolkit
+          persist-credentials: false
+          fetch-depth: 0
+
+      - name: Adding test tools
+        run: conda env update -f cicd-toolkit/conda_envs/test.yaml
+
       - name: Running tests
-        run: |
-          conda install -y python pytest pytest-mock
-          python -m pytest
+        run: python -m pytest
