@@ -10,25 +10,23 @@ meta := meta.yaml
 build-recipe:
 	echo "{% set name = \"${PACKAGE}\" %}" > $(recipe)/$(meta)
 	cat $(recipe)/_meta1.yaml >> $(recipe)/$(meta)
-	$(eval PACKAGES := $(shell sed -ne '/^dependencies:$$/{:a' -e 'n;p;ba' -e '}' ../../environment.yaml | awk '{print $$2}'))
-	for pack in $(PACKAGES); do \
-		echo $$pack \
-			| sed "s/^\(.*\)::\(.*\)$$/\2 \1/" \
-			| awk '{print "    - "$$1}' \
-		>> $(recipe)/$(meta); \
-	done
+	sed -ne '/^dependencies:$$/{:a' -e 'n;p;ba' -e '}' ../../environment.yaml \
+		| sed -e 's#.*- \(\)#\1#' \
+	> $(recipe)/deps.yaml
+	cat $(recipe)/deps.yaml \
+		| sed "s/^\(.*\)::\(.*\)$$/\2/" \
+		| awk '{print "    - " $$0}' \
+	>> $(recipe)/$(meta)
 	cat $(recipe)/_meta2.yaml >> $(recipe)/$(meta)
 	sed -ne '/^dependencies:$$/{:a' -e 'n;p;ba' -e '}' ../conda_envs/test.yaml | awk '{print "    - "$$2}' >> $(recipe)/$(meta)
 	cat $(recipe)/_meta3.yaml >> $(recipe)/$(meta)
 	echo "    - `$(MAKE_CMD) -f test.mk test-cmd`" >> $(recipe)/$(meta)
 	cat $(recipe)/_meta4.yaml >> $(recipe)/$(meta)
 	echo > $(recipe)/_conda_channels.txt
-	for pack in $(PACKAGES); do \
-		echo $$pack \
-			| sed "s/^\(.*\)::\(.*\)$$/\2 \1/" \
-			| awk '{print $$2}' \
-		>> $(recipe)/_conda_channels.txt; \
-	done
+	cat $(recipe)/deps.yaml \
+		| sed "s/^\(.*\)::\(.*\)$$/\2 - \1/" \
+		| awk '{print $$3}' \
+	>> $(recipe)/_conda_channels.txt
 	awk '/channels/,/dependencies/{if(/dependencies|channels/) next; print}' ../../environment.yaml \
 		| awk '{print $$2}' \
 	>> $(recipe)/_conda_channels.txt
@@ -37,9 +35,9 @@ build-recipe:
 		| awk '!/^$$/' \
 	> $(recipe)/conda_channels.txt
 	rm $(recipe)/_conda_channels.txt
-	$(eval CHANNELS := $(shell cat $(recipe)/conda_channels.txt))
+	rm $(recipe)/deps.yaml
 	echo -n '--override-channels ' > $(recipe)/_conda_channels_cmd.txt
-	for channel in $(CHANNELS); do \
+	for channel in `cat $(recipe)/conda_channels.txt`; do \
 		echo -n '--channel '$$channel' ' >> $(recipe)/_conda_channels_cmd.txt; \
 	done
 
@@ -63,11 +61,6 @@ MAKE_CMD = $(MAKE) -s --no-print-directory
 ECHO = echo -n ">>>"
 
 conda-clean: conda-clean-build
-
-#python_versions = $(shell cat ../recipe/conda_build_config.yaml | awk 'NR>1 {print $$2}')
-# recipe_channels = $(shell cat $(recipe)/conda_channels.txt)
-# conda_channels  = $(shell conda config --show channels | awk '{print $2}')
-
 
 define check
 	$(1) && echo OK
