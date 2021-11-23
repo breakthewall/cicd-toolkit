@@ -33,7 +33,7 @@ check: check-buildenv
 	@conda run -n $(env) --no-capture-output $(MAKE_CMD) -f test.mk check
 
 test: test-buildenv ## Test code with 'pytest', this is the fastest way to test the code
-	@conda run -n $(env) --no-capture-output $(MAKE_CMD) -f test.mk test
+	@conda run -n $(env) --no-capture-output $(MAKE_CMD) -f test.mk test args="$(args)"
 
 %-buildenv: ## Test conda package
 ifneq ($(strip $(env)),)
