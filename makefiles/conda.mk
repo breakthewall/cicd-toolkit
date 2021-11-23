@@ -13,6 +13,22 @@ build-recipe:
 	sed -ne '/^dependencies:$$/{:a' -e 'n;p;ba' -e '}' ../../environment.yaml \
 		| sed -e 's#.*- \(\)#\1#' \
 	> $(recipe)/deps.yaml
+	echo -n `grep "python" $(recipe)/deps.yaml | grep -e "=" -e ">" -e "<"` > $(recipe)/_python
+	echo "  host:" >> $(recipe)/$(meta)
+	if [ -s $(recipe)/_python ]; then \
+		echo -n "    - " >> $(recipe)/$(meta); \
+		cat $(recipe)/_python >> $(recipe)/$(meta); \
+		echo >> $(recipe)/$(meta); \
+		echo "  run:" >> $(recipe)/$(meta); \
+		echo -n "    - " >> $(recipe)/$(meta); \
+		cat $(recipe)/_python >> $(recipe)/$(meta); \
+		echo >> $(recipe)/$(meta); \
+	else \
+		echo "    - python {{ python }}" >> $(recipe)/$(meta); \
+		echo "  run:" >> $(recipe)/$(meta); \
+		echo "    - python {{ python }}" >> $(recipe)/$(meta); \
+	fi;
+	sed -i '/python/d' $(recipe)/deps.yaml; \
 	cat $(recipe)/deps.yaml \
 		| sed "s/^\(.*\)::\(.*\)$$/\2/" \
 		| awk '{print "    - " $$0}' \
@@ -34,8 +50,10 @@ build-recipe:
 		| tr -d " \t\r" \
 		| awk '!/^$$/' \
 	> $(recipe)/conda_channels.txt
-	rm $(recipe)/_conda_channels.txt
-	rm $(recipe)/deps.yaml
+	rm -f \
+		$(recipe)/_conda_channels.txt \
+		$(recipe)/deps.yaml \
+		$(recipe)/_python
 	echo -n '--override-channels ' > $(recipe)/_conda_channels_cmd.txt
 	for channel in `cat $(recipe)/conda_channels.txt`; do \
 		echo -n '--channel '$$channel' ' >> $(recipe)/_conda_channels_cmd.txt; \

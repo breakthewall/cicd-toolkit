@@ -12,7 +12,3 @@ build:
   script: {{ PYTHON }} -m pip install --no-deps --ignore-installed -vv .
 
 requirements:
-  host:
-    - python {{ python }}
-  run:
-    - python {{ python }}
