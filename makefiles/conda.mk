@@ -28,7 +28,7 @@ build-recipe:
 		echo "  run:" >> $(recipe)/$(meta); \
 		echo "    - python {{ python }}" >> $(recipe)/$(meta); \
 	fi;
-	sed -i '/python/d' $(recipe)/deps.yaml; \
+	sed -i /`cat $(recipe)/_python`/d $(recipe)/deps.yaml; \
 	cat $(recipe)/deps.yaml \
 		| sed "s/^\(.*\)::\(.*\)$$/\2/" \
 		| awk '{print "    - " $$0}' \
