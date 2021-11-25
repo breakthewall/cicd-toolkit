@@ -13,7 +13,7 @@ build-recipe:
 	sed -ne '/^dependencies:$$/{:a' -e 'n;p;ba' -e '}' ../../environment.yaml \
 		| sed -e 's#.*- \(\)#\1#' \
 	> $(recipe)/deps.yaml
-	echo -n `grep "python" $(recipe)/deps.yaml | grep -e "=" -e ">" -e "<"` > $(recipe)/_python
+	echo -n `grep "^python[ <>=]" $(recipe)/deps.yaml | grep -e "=" -e ">" -e "<"` > $(recipe)/_python
 	echo "  host:" >> $(recipe)/$(meta)
 	if [ -s $(recipe)/_python ]; then \
 		echo -n "    - " >> $(recipe)/$(meta); \
