@@ -57,7 +57,7 @@ flake: ## Run flake over code and tests
 test: ## Test code with 'pytest'
 	@cd ../.. ; \
 	export PYTHONPATH=$$PWD ; \
-	$(test_cmd) -p no:cacheprovider `echo $(test_src) | cut -c 4-` ; \
+	$(test_cmd) -p no:cacheprovider `echo $(test_src)` ; \
 	res_test=$$? ; \
 	if [ $$res_test -eq 0 ] || [ $$res_test -eq 5 ] ; then \
 		exit 0 ; \
