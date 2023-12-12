@@ -22,17 +22,18 @@ build-recipe:
 		echo "  run:" >> $(recipe)/$(meta); \
 		echo -n "    - " >> $(recipe)/$(meta); \
 		cat $(recipe)/_python >> $(recipe)/$(meta); \
-		echo >> $(recipe)/$(meta); \
+		echo >> $(recipe)/$(meta) \
+		sed /"`cat $(recipe)/_python`"/d $(recipe)/deps.yaml > $(recipe)/deps2.yaml \
+		cat $(recipe)/deps2.yaml \
+			| sed "s/^\(.*\)::\(.*\)$$/\2/" \
+			| awk '{print "    - " $$0}' \
+		>> $(recipe)/$(meta); \
+		echo "" >> $(recipe)/$(meta); \
 	else \
 		echo "    - python {{ python }}" >> $(recipe)/$(meta); \
 		echo "  run:" >> $(recipe)/$(meta); \
 		echo "    - python {{ python }}" >> $(recipe)/$(meta); \
 	fi;
-	sed /"`cat $(recipe)/_python`"/d $(recipe)/deps.yaml > $(recipe)/deps2.yaml && \
-	cat $(recipe)/deps2.yaml \
-		| sed "s/^\(.*\)::\(.*\)$$/\2/" \
-		| awk '{print "    - " $$0}' \
-	>> $(recipe)/$(meta)
 	cat $(recipe)/_meta2.yaml >> $(recipe)/$(meta)
 	sed -ne '/^dependencies:$$/{:a' -e 'n;p;ba' -e '}' ../conda_envs/test.yaml | awk '{print "    - "$$2}' >> $(recipe)/$(meta)
 	cat $(recipe)/_meta3.yaml >> $(recipe)/$(meta)
