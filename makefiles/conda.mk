@@ -10,7 +10,7 @@ meta := meta.yaml
 build-recipe:
 	echo "{% set name = \"${PACKAGE}\" %}" > $(recipe)/$(meta)
 	cat $(recipe)/_meta1.yaml >> $(recipe)/$(meta)
-	sed -ne '/^dependencies:$$/{:a' -e 'n;p;ba' -e '}' ../../environment.yaml \
+	sed '1,/dependencies/d' ../../environment.yaml \
 		| sed -e 's#.*- \(\)#\1#' \
 	> $(recipe)/deps.yaml
 	echo -n `grep "^python[ <>=]" $(recipe)/deps.yaml | grep -e "=" -e ">" -e "<"` > $(recipe)/_python
@@ -34,6 +34,11 @@ build-recipe:
 		echo "  run:" >> $(recipe)/$(meta); \
 		echo "    - python {{ python }}" >> $(recipe)/$(meta); \
 	fi;
+	cat $(recipe)/deps.yaml \
+		| grep -v python \
+		| sed "s/^\(.*\)::\(.*\)$$/\2/" \
+		| awk '{print "    - " $$0}' \
+	>> $(recipe)/$(meta); \
 	cat $(recipe)/_meta2.yaml >> $(recipe)/$(meta)
 	sed -ne '/^dependencies:$$/{:a' -e 'n;p;ba' -e '}' ../conda_envs/test.yaml | awk '{print "    - "$$2}' >> $(recipe)/$(meta)
 	cat $(recipe)/_meta3.yaml >> $(recipe)/$(meta)
