@@ -45,10 +45,10 @@ build-recipe:
 	echo "    - `$(MAKE_CMD) -f test.mk test-cmd`" >> $(recipe)/$(meta)
 	cat $(recipe)/_meta4.yaml >> $(recipe)/$(meta)
 	echo > $(recipe)/_conda_channels.txt
-	# cat $(recipe)/deps.yaml \
-	# 	| sed "s/^\(.*\)::\(.*\)$$/\2 - \1/" \
-	# 	| awk '{print $$3}' \
-	# >> $(recipe)/_conda_channels.txt
+	cat $(recipe)/deps.yaml \
+		| sed "s/^\(.*\)::\(.*\)$$/\2 - \1/" \
+		| awk '{print $$3}' \
+	>> $(recipe)/_conda_channels.txt
 	awk '/channels/,/dependencies/{if(/dependencies|channels/) next; print}' ../../environment.yaml \
 		| awk '{print $$2}' \
 	>> $(recipe)/_conda_channels.txt
